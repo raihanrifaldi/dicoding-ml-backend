@@ -16,7 +16,7 @@ COPY . .
 RUN npm rebuild @tensorflow/tfjs-node --build-from-source 
 
 # Make port 3000 available to the world outside this container.
-EXPOSE 8080
+EXPOSE 3000
 
 # Run the web service on container startup.
 CMD [ "npm", "start" ]

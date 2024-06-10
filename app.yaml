@@ -1,0 +1,10 @@
+runtime: nodejs20
+
+env: standard
+entrypoint: node src\server\server.js
+entrypoint: asclepius\src\scripts\api.js
+
+
+handlers:
+  - url: /.*
+    script: auto
