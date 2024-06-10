@@ -1,4 +1,5 @@
 const predictClassification = require('../services/inferenceService');
+const getHistories = require("../services/getHistories");
 const crypto = require('crypto');
 const storeData = require('../services/storeData');
 

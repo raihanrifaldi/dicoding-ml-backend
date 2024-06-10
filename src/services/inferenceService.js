@@ -1,45 +1,49 @@
-const tf = require('@tensorflow/tfjs-node');
-const InputError = require('../exceptions/InputError');
+const tf = require("@tensorflow/tfjs-node");
+const { NIL } = require("uuid");
 
-async function predictClassification(model, image) {
-  try {
-    const tensor = tf.node
-      .decodeJpeg(image)
-      .resizeNearestNeighbor([224, 224])
-      .expandDims()
-      .toFloat()
+async function predictBinaryClassification(model, image) {
+	try {
+		// Decode the JPEG image to a tensor
+		const tensor = tf.node
+			.decodeImage(image, 3)
+			.resizeNearestNeighbor([224, 224])
+			.expandDims()
+			.toFloat();
 
-    const prediction = model.predict(tensor);
-    const score = await prediction.data();
-    const confidenceScore = Math.max(...score) * 100;
+		// Perform the prediction
+		const prediction = model.predict(tensor);
+		const score = await prediction.data(); // Get the prediction score
 
-    const classes = ['Melanocytic nevus', 'Squamous cell carcinoma', 'Vascular lesion'];
+		// Convert the score to a percentage
+		const finalScore = Math.max(...score) * 100;
 
-    const classResult = tf.argMax(prediction, 1).dataSync()[0];
-    const label = classes[classResult];
+		let label, isBadRequest;
+		if (finalScore > 99) {
+			label = "Cancer";
+			isBadRequest = false;
+		} else if (finalScore < 1) {
+			label = "Non-cancer";
+			isBadRequest = false;
+		} else {
+			isBadRequest = true;
+			label = null;
+		}
 
-    let explanation, suggestion;
+		// Provide explanation and suggestion based on the predicted class
+		let suggestion;
+		if (label === "Cancer") {
+			suggestion =
+				"Segera konsultasi dengan dokter spesialis untuk pemeriksaan lebih lanjut dan pengobatan.";
+		} else {
+			suggestion =
+				"Tetap pantau kesehatan kulit secara berkala dan konsultasikan dengan dokter jika ada perubahan yang mencurigakan.";
+		}
 
-    if (label === 'Melanocytic nevus') {
-      explanation = "Melanocytic nevus adalah kondisi permukaan kulit memiliki bercak warna yang berasal dari sel-sel melanosit, yakni pembentukan warna kulit dan rambut."
-      suggestion = "Segera konsultasi dengan dokter terdekat jika ukuran semakin membesar dengan cepat, mudah luka, atau berdarah."
-    }
-  
-    if (label === 'Squamous cell carcinoma') {
-      explanation = "Squamous cell carcinoma adalah jenis kanker kulit yang umum dijumpai. Penyakit ini sering tumbuh pada bagian-bagian tubuh yang sering terkena sinar UV."
-      suggestion = "Segera konsultasi dengan dokter terdekat untuk meminimalisasi penyebaran kanker."
-    }
-  
-    if (label === 'Vascular lesion') {
-      explanation = "Vascular lesion adalah penyakit yang dikategorikan sebagai kanker atau tumor. Penyakit ini sering muncul pada bagian kepala dan leher."
-      suggestion = "Segera konsultasi dengan dokter terdekat untuk mengetahui detail terkait tingkat bahaya penyakit."
-  
-    }
-
-    return { confidenceScore, label, explanation, suggestion };
-  } catch (error) {
-    throw new InputError(`Terjadi kesalahan input: ${error.message}`);
-  }
+		// Return the results
+		return { isBadRequest, label, suggestion };
+	} catch (error) {
+		throw new Error("Terjadi kesalahan dalam melakukan prediksi");
+	}
 }
 
-module.exports = predictClassification;
+module.exports = predictBinaryClassification;

@@ -8,10 +8,18 @@ const routes = [
     options: {
       payload: {
         allow: 'multipart/form-data',
-        multipart: true
-      }
-    }
-  }
+        multipart: true,
+        maxBytes: 1 * 1000 * 1000,
+      },
+    },
+  },
+
+  {
+		path: "/predict/histories",
+		method: "GET",
+		handler: getPredictionHistories,
+	},
+
 ]
 
 module.exports = routes;
